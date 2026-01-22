@@ -1,18 +1,23 @@
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
-import { GoogleGenAI } from "@google/genai";
+// 1. Ajuste da Chave: O Vite exige o 'import.meta.env'
+const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
-// Initialize the GoogleGenAI client using process.env.API_KEY directly as a named parameter
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// 2. Inicialização correta do cliente
+const genAI = new GoogleGenerativeAI(API_KEY);
 
 export const generateCourseDescription = async (courseName: string) => {
   try {
-    // Call generateContent directly from ai.models without creating a model instance first
-    const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
-      contents: `Gere uma descrição profissional e motivadora de até 3 frases para um curso chamado "${courseName}".`,
-    });
-    // Access the .text property directly (not a method) as per SDK guidelines
-    return response.text || "Sem descrição disponível.";
+    // 3. No SDK oficial, primeiro pegamos o modelo
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+    const prompt = `Gere uma descrição profissional e motivadora de até 3 frases para um curso chamado "${courseName}".`;
+    
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    
+    // 4. O texto é um método .text()
+    return response.text() || "Sem descrição disponível.";
   } catch (error) {
     console.error("Gemini Error:", error);
     return "Erro ao gerar descrição automática.";
@@ -21,13 +26,14 @@ export const generateCourseDescription = async (courseName: string) => {
 
 export const summarizePatientCase = async (patientName: string, notes: string) => {
   try {
-    // Call generateContent directly from ai.models without creating a model instance first
-    const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
-      contents: `Resuma brevemente o caso clínico do paciente ${patientName} baseado nestas notas: "${notes}". Foco em pontos chave para o analista.`,
-    });
-    // Access the .text property directly
-    return response.text || "Sem resumo disponível.";
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+    const prompt = `Resuma brevemente o caso clínico do paciente ${patientName} baseado nestas notas: "${notes}". Foco em pontos chave para o analista.`;
+    
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    
+    return response.text() || "Sem resumo disponível.";
   } catch (error) {
     console.error("Gemini Error:", error);
     return "Erro ao processar resumo.";
